@@ -61,8 +61,9 @@ class describe_Entity : nspec {
             it["initializes"] = () => {
                 var contextInfo = new ContextInfo(null, null, null);
                 var componentPools = new Stack<IComponent>[42];
+                var componentSets = CreateSets(2);
                 e = new TestEntity();
-                e.Initialize(1, 2, componentPools, contextInfo);
+                e.Initialize(creationIndex: 1, totalComponents: 2, componentPools, componentSets, contextInfo);
 
                 e.isEnabled.should_be_true();
                 e.creationIndex.should_be(1);
@@ -74,15 +75,16 @@ class describe_Entity : nspec {
             it["reactivates after being desroyed"] = () => {
                 var contextInfo = new ContextInfo(null, null, null);
                 var componentPools = new Stack<IComponent>[42];
+                var componentSets = CreateSets(2);
                 e = new TestEntity();
-                e.Initialize(1, 2, componentPools, contextInfo);
+                e.Initialize(1, 2, componentPools, componentSets, contextInfo);
 
                 e.InternalDestroy();
 
-                e.Reactivate(42);
+                e.Reactivate();
 
                 e.isEnabled.should_be_true();
-                e.creationIndex.should_be(42);
+                e.creationIndex.should_be(1);
                 e.totalComponents.should_be(2);
                 e.componentPools.should_be_same(componentPools);
                 e.contextInfo.should_be_same(contextInfo);
@@ -626,5 +628,16 @@ class describe_Entity : nspec {
                 };
             };
         };
+    }
+
+    VirtualSparseSet<IComponent>[] CreateSets(int setCount)
+    {
+        var sets = new VirtualSparseSet<IComponent>[setCount];
+        for (int i = 0; i < setCount; i++)
+        {
+            sets[i] = new VirtualSparseSet<IComponent>();
+        }
+
+        return sets;
     }
 }

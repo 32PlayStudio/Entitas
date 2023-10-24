@@ -12,8 +12,20 @@ public static class TestExtensions {
 
     public static TestEntity CreateEntity(this nspec spec) {
         var entity = new TestEntity();
-        entity.Initialize(0, CID.TotalComponents, new Stack<IComponent>[CID.TotalComponents]);
+        var componentSets = CreateComponentSets(CID.TotalComponents);
+        entity.Initialize(0, CID.TotalComponents, new Stack<IComponent>[CID.TotalComponents], componentSets);
         return entity;
+    }
+
+    private static VirtualSparseSet<IComponent>[] CreateComponentSets(int totalComponents)
+    {
+        var componentSets = new VirtualSparseSet<IComponent>[totalComponents];
+        for (int i = 0; i < totalComponents; i++)
+        {
+            componentSets[i] = new VirtualSparseSet<IComponent>();
+        }
+
+        return componentSets;
     }
 
     public static string GetProjectRoot() {

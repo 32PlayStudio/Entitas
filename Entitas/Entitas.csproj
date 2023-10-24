@@ -36,6 +36,8 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Entitas\Context\Storage\SparseIndex.cs" />
+    <Compile Include="Entitas\Context\Storage\VirtualSparseSet.cs" />
     <Compile Include="Entitas\Matcher\Matcher.cs" />
     <Compile Include="Entitas\Matcher\MatcherToString.cs" />
     <Compile Include="Entitas\Matcher\MatcherEquals.cs" />
@@ -108,7 +110,6 @@
     <Folder Include="Entitas\EntityIndex\" />
     <Folder Include="Entitas\Entity\" />
     <Folder Include="Entitas\Group\" />
-    <Folder Include="Entitas\Context\" />
     <Folder Include="Entitas\Systems\" />
     <Folder Include="Entitas\Context\Exceptions\" />
     <Folder Include="Entitas\Entity\Exceptions\" />

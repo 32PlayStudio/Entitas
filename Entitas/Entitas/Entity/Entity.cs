@@ -72,7 +72,7 @@ namespace Entitas {
         bool _isEnabled;
 
         int _totalComponents;
-        IComponent[] _components;
+        
         Stack<IComponent>[] _componentPools;
         ContextInfo _contextInfo;
         IAERC _aerc;
@@ -81,19 +81,25 @@ namespace Entitas {
         int[] _componentIndicesCache;
         string _toStringCache;
         StringBuilder _toStringBuilder;
+        VirtualSparseSet<IComponent>[] _componentSets;
 
         public Entity() {
             _componentBuffer = new List<IComponent>();
             _indexBuffer = new List<int>();
         }
 
-        public void Initialize(int creationIndex, int totalComponents, Stack<IComponent>[] componentPools, ContextInfo contextInfo = null, IAERC aerc = null) {
-            Reactivate(creationIndex);
-
+        public void Initialize(
+            int creationIndex, int totalComponents, 
+            Stack<IComponent>[] componentPools, 
+            VirtualSparseSet<IComponent>[] componentSets,
+            ContextInfo contextInfo = null, IAERC aerc = null) {
+            
+            Reactivate();
+            _creationIndex = creationIndex;
             _totalComponents = totalComponents;
-            _components = new IComponent[totalComponents];
             _componentPools = componentPools;
-
+            _componentSets = componentSets;
+            
             _contextInfo = contextInfo ?? createDefaultContextInfo();
             _aerc = aerc ?? new SafeAERC(this);
         }
@@ -107,8 +113,7 @@ namespace Entitas {
             return new ContextInfo("No Context", componentNames, null);
         }
 
-        public void Reactivate(int creationIndex) {
-            _creationIndex = creationIndex;
+        public void Reactivate() {
             _isEnabled = true;
         }
 
@@ -134,10 +139,13 @@ namespace Entitas {
                 );
             }
 
-            _components[index] = component;
+            var set = _componentSets[index];
+            set.SetValue(_creationIndex, component);
+            
             _componentsCache = null;
             _componentIndicesCache = null;
             _toStringCache = null;
+            
             if (OnComponentAdded != null) {
                 OnComponentAdded(this, index, component);
             }
@@ -190,17 +198,20 @@ namespace Entitas {
             // TODO VD PERFORMANCE
             // _toStringCache = null;
 
-            var previousComponent = _components[index];
-            if (replacement != previousComponent) {
-                _components[index] = replacement;
+            var componentSet = _componentSets[index];
+            IComponent previousComponent;
+            var hasComponent = componentSet.TryGetValue(_creationIndex, out previousComponent);
+            if (!hasComponent || replacement != previousComponent) {
                 _componentsCache = null;
                 if (replacement != null) {
+                    componentSet.SetValue(_creationIndex, replacement);
                     if (OnComponentReplaced != null) {
                         OnComponentReplaced(
                             this, index, previousComponent, replacement
                         );
                     }
                 } else {
+                    componentSet.Remove(_creationIndex);
                     _componentIndicesCache = null;
 
                     // TODO VD PERFORMANCE
@@ -224,10 +235,12 @@ namespace Entitas {
 
         /// Returns a component at the specified index.
         /// You can only get a component at an index if it exists.
-        /// The prefered way is to use the
+        /// The preferred way is to use the
         /// generated methods from the code generator.
         public IComponent GetComponent(int index) {
-            if (!HasComponent(index)) {
+            IComponent component;
+            var set = _componentSets[index];
+            if (!set.TryGetValue(_creationIndex, out component)) {
                 throw new EntityDoesNotHaveComponentException(
                     index, "Cannot get component '" +
                            _contextInfo.componentNames[index] + "' from " + this + "!",
@@ -236,15 +249,16 @@ namespace Entitas {
                 );
             }
 
-            return _components[index];
+            return component;
         }
 
         /// Returns all added components.
         public IComponent[] GetComponents() {
             if (_componentsCache == null) {
-                for (int i = 0; i < _components.Length; i++) {
-                    var component = _components[i];
-                    if (component != null) {
+                for (int i = 0; i < _componentSets.Length; i++) {
+                    var set = _componentSets[i];
+                    IComponent component;
+                    if (set.TryGetValue(_creationIndex, out component)) {
                         _componentBuffer.Add(component);
                     }
                 }
@@ -259,8 +273,9 @@ namespace Entitas {
         /// Returns all indices of added components.
         public int[] GetComponentIndices() {
             if (_componentIndicesCache == null) {
-                for (int i = 0; i < _components.Length; i++) {
-                    if (_components[i] != null) {
+                for (int i = 0; i < _componentSets.Length; i++) {
+                    var set = _componentSets[i];
+                    if (set.Contains(_creationIndex)) {
                         _indexBuffer.Add(i);
                     }
                 }
@@ -275,14 +290,15 @@ namespace Entitas {
         /// Determines whether this entity has a component
         /// at the specified index.
         public bool HasComponent(int index) {
-            return _components[index] != null;
+            return _componentSets[index].Contains(_creationIndex);
         }
 
         /// Determines whether this entity has components
         /// at all the specified indices.
         public bool HasComponents(int[] indices) {
             for (int i = 0; i < indices.Length; i++) {
-                if (_components[indices[i]] == null) {
+                var set = _componentSets[indices[i]];
+                if (!set.Contains(_creationIndex)) {
                     return false;
                 }
             }
@@ -294,7 +310,8 @@ namespace Entitas {
         /// at any of the specified indices.
         public bool HasAnyComponent(int[] indices) {
             for (int i = 0; i < indices.Length; i++) {
-                if (_components[indices[i]] != null) {
+                var set = _componentSets[indices[i]];
+                if (set.Contains(_creationIndex)) {
                     return true;
                 }
             }
@@ -305,8 +322,9 @@ namespace Entitas {
         /// Removes all components.
         public void RemoveAllComponents() {
             _toStringCache = null;
-            for (int i = 0; i < _components.Length; i++) {
-                if (_components[i] != null) {
+            for (int i = 0; i < _componentSets.Length; i++) {
+                var set = _componentSets[i];
+                if (set.Contains(_creationIndex)) {
                     replaceComponent(i, null);
                 }
             }

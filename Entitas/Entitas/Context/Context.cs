@@ -52,6 +52,7 @@ namespace Entitas {
 
         readonly int _totalComponents;
 
+        readonly VirtualSparseSet<IComponent>[] _componentSets;
         readonly Stack<IComponent>[] _componentPools;
         readonly ContextInfo _contextInfo;
         readonly Func<IEntity, IAERC> _aercFactory;
@@ -102,6 +103,12 @@ namespace Entitas {
 
             _groupsForIndex = new List<IGroup<TEntity>>[totalComponents];
             _componentPools = new Stack<IComponent>[totalComponents];
+            _componentSets = new VirtualSparseSet<IComponent>[totalComponents];
+            for (var i = 0; i < _componentSets.Length; i++)
+            {
+                _componentSets[i] = new VirtualSparseSet<IComponent>();
+            }
+            
             _entityIndices = new Dictionary<string, IEntityIndex>();
             _groupChangedListPool = new ObjectPool<List<GroupChanged<TEntity>>>(
                 () => new List<GroupChanged<TEntity>>(),
@@ -132,10 +139,10 @@ namespace Entitas {
 
             if (_reusableEntities.Count > 0) {
                 entity = _reusableEntities.Pop();
-                entity.Reactivate(_creationIndex++);
+                entity.Reactivate();
             } else {
                 entity = _entityFactory();
-                entity.Initialize(_creationIndex++, _totalComponents, _componentPools, _contextInfo, _aercFactory(entity));
+                entity.Initialize(_creationIndex++, _totalComponents, _componentPools, _componentSets, _contextInfo, _aercFactory(entity));
             }
 
             _entities.Add(entity);

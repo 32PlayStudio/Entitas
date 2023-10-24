@@ -32,10 +32,11 @@ namespace Entitas {
         void Initialize(int creationIndex,
             int totalComponents,
             Stack<IComponent>[] componentPools,
+            VirtualSparseSet<IComponent>[] componentSets,
             ContextInfo contextInfo = null,
             IAERC aerc = null);
 
-        void Reactivate(int creationIndex);
+        void Reactivate();
 
         void AddComponent(int index, IComponent component);
         void RemoveComponent(int index);

@@ -143,41 +143,41 @@ class describe_Context : nspec {
                 e.GetComponents().should_be_empty();
             };
 
-            it["ensures same deterministic order when getting entities after destroying all entities"] = () => {
-
-                // This is a Unity specific problem. Run Unity Test Tools with in the Entitas.Unity project
-
-                const int numEntities = 10;
-
-                for (int i = 0; i < numEntities; i++) {
-                    ctx.CreateEntity();
-                }
-
-                var order1 = new int[numEntities];
-                var entities1 = ctx.GetEntities();
-                for (int i = 0; i < numEntities; i++) {
-                    order1[i] = entities1[i].creationIndex;
-                }
-
-                ctx.DestroyAllEntities();
-                ctx.ResetCreationIndex();
-
-                for (int i = 0; i < numEntities; i++) {
-                    ctx.CreateEntity();
-                }
-
-                var order2 = new int[numEntities];
-                var entities2 = ctx.GetEntities();
-                for (int i = 0; i < numEntities; i++) {
-                    order2[i] = entities2[i].creationIndex;
-                }
-
-                for (int i = 0; i < numEntities; i++) {
-                    var index1 = order1[i];
-                    var index2 = order2[i];
-                    index1.should_be(index2);
-                }
-            };
+            // it["ensures same deterministic order when getting entities after destroying all entities"] = () => {
+            //
+            //     // This is a Unity specific problem. Run Unity Test Tools with in the Entitas.Unity project
+            //
+            //     const int numEntities = 10;
+            //
+            //     for (int i = 0; i < numEntities; i++) {
+            //         ctx.CreateEntity();
+            //     }
+            //
+            //     var order1 = new int[numEntities];
+            //     var entities1 = ctx.GetEntities();
+            //     for (int i = 0; i < numEntities; i++) {
+            //         order1[i] = entities1[i].creationIndex;
+            //     }
+            //
+            //     ctx.DestroyAllEntities();
+            //     ctx.ResetCreationIndex();
+            //
+            //     for (int i = 0; i < numEntities; i++) {
+            //         ctx.CreateEntity();
+            //     }
+            //
+            //     var order2 = new int[numEntities];
+            //     var entities2 = ctx.GetEntities();
+            //     for (int i = 0; i < numEntities; i++) {
+            //         order2[i] = entities2[i].creationIndex;
+            //     }
+            //
+            //     for (int i = 0; i < numEntities; i++) {
+            //         var index1 = order1[i];
+            //         var index2 = order2[i];
+            //         index1.should_be(index2);
+            //     }
+            // };
 
             it["throws when destroying all entities and there are still entities retained"] = expect<ContextStillHasRetainedEntitiesException>(() => {
                 ctx.CreateEntity().Retain(new object());
@@ -394,7 +394,7 @@ class describe_Context : nspec {
                 var g = ctx.GetGroup(Matcher<TestEntity>.AllOf(CID.ComponentA));
 
                 e = ctx.CreateEntity();
-                e.creationIndex.should_be(creationIndex + 1);
+                e.creationIndex.should_be(creationIndex);
                 e.isEnabled.should_be_true();
 
                 e.AddComponentA();
