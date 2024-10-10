@@ -79,6 +79,7 @@ namespace Entitas {
                     _buffer.Add(e);
                 }
             }
+            _collectedEntities.Clear();
 
             if (_buffer.Count != 0) {
                 try {
@@ -87,7 +88,6 @@ namespace Entitas {
                     for (int i = 0; i < _buffer.Count; i++) {
                         _buffer[i].Release(this);
                     }
-                    _collectedEntities.Clear();
                     _buffer.Clear();
                 }
             }
